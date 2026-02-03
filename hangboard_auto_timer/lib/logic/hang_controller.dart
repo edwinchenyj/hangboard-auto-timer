@@ -135,7 +135,9 @@ class HangController {
     }
 
     // Calculate how long current arm position has been held
-    final holdDuration = result.timestamp.difference(_armPositionChangeTime ?? result.timestamp);
+    final holdDuration = _armPositionChangeTime != null
+        ? result.timestamp.difference(_armPositionChangeTime!)
+        : Duration.zero;
 
     // State machine logic
     switch (_currentState) {

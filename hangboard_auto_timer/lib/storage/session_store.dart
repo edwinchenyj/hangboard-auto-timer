@@ -129,8 +129,9 @@ class InMemorySessionStore implements SessionStore {
 
   @override
   Future<List<TrainingSession>> getAllSessions() async {
-    return _sessions.values.toList()
-      ..sort((a, b) => b.startTime.compareTo(a.startTime)); // Most recent first
+    final sessions = _sessions.values.toList();
+    sessions.sort((a, b) => b.startTime.compareTo(a.startTime)); // Most recent first
+    return sessions;
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../logic/hang_controller.dart';
 import '../pose/pose_service.dart';
@@ -16,6 +17,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
   late SessionStore _sessionStore;
   HangStateInfo? _currentStateInfo;
   TrainingSession? _currentSession;
+  StreamSubscription<HangStateInfo>? _stateSubscription;
+  DateTime? _hangStartTime;
 
   @override
   void initState() {
@@ -27,7 +30,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     _sessionStore = InMemorySessionStore();
     
     // Listen to state changes
-    _hangController.stateStream.listen(_onStateChanged);
+    _stateSubscription = _hangController.stateStream.listen(_onStateChanged);
     
     // Start the controller
     _hangController.start();
@@ -41,16 +44,18 @@ class _TrainingScreenState extends State<TrainingScreen> {
     // Track session data
     if (stateInfo.state == HangState.hang && _currentSession == null) {
       // Starting a new session
+      _hangStartTime = DateTime.now();
       _currentSession = TrainingSession(
         id: DateTime.now().toIso8601String(),
         startTime: DateTime.now(),
       );
     } else if (stateInfo.state == HangState.rest && 
                _currentSession != null && 
+               _hangStartTime != null &&
                stateInfo.hangDuration != null) {
       // Completed a hang, add to session
       final hang = HangRecord(
-        startTime: DateTime.now().subtract(stateInfo.hangDuration!),
+        startTime: _hangStartTime!,
         duration: stateInfo.hangDuration!,
       );
       
@@ -60,11 +65,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
       
       // Save session (in production, might wait until user explicitly ends session)
       _sessionStore.saveSession(_currentSession!);
+      _hangStartTime = null;
     }
   }
 
   @override
   void dispose() {
+    _stateSubscription?.cancel();
     _hangController.dispose();
     super.dispose();
   }
