@@ -38,6 +38,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void _startListening() {
     // Listen to gesture events and forward to controller
     _gestureSub = widget.poseService.gestureEvents.listen((event) {
+      if (!mounted) return;
       setState(() {
         _lastGesture = event;
       });
@@ -46,6 +47,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     // Listen to UI state updates
     _uiSub = widget.controller.uiStateStream.listen((uiState) {
+      if (!mounted) return;
       // Trigger haptic/beep on state transitions
       if (_previousState != null && _previousState != uiState.state) {
         _onStateTransition(_previousState!, uiState.state);
@@ -67,6 +69,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
     } else if (from == HangState.rest && to == HangState.prep) {
       // REST → PREP: light haptic
       HapticFeedback.lightImpact();
+    }
+  }
+
+  @override
+  void didUpdateWidget(TrainingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.poseService != widget.poseService ||
+        oldWidget.controller != widget.controller) {
+      _gestureSub?.cancel();
+      _uiSub?.cancel();
+      _startListening();
     }
   }
 

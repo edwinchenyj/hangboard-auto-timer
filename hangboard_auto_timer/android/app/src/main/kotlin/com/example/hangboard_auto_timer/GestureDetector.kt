@@ -86,6 +86,7 @@ class GestureDetector(private val context: Context) {
         cameraProvider?.unbindAll()
         poseLandmarker?.close()
         poseLandmarker = null
+        executor.shutdown()
         resetSmoothing()
     }
 

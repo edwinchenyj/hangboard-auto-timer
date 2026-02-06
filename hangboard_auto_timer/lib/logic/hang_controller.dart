@@ -104,6 +104,20 @@ class HangConfig {
       confMin: confMin ?? this.confMin,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is HangConfig &&
+          prepMs == other.prepMs &&
+          upHoldMs == other.upHoldMs &&
+          downHoldMs == other.downHoldMs &&
+          stopIgnoreMs == other.stopIgnoreMs &&
+          confMin == other.confMin;
+
+  @override
+  int get hashCode =>
+      Object.hash(prepMs, upHoldMs, downHoldMs, stopIgnoreMs, confMin);
 }
 
 /// Callback for state transition events (e.g., beeps/haptics).
@@ -139,6 +153,7 @@ class HangController {
   int _restStartMs = 0;
   int _prepStartMs = 0;
   int _lastHangDurationMs = 0;
+  int _lastRestDurationMs = 0;
 
   // Timer for prep countdown
   Timer? _prepTimer;
@@ -258,11 +273,11 @@ class HangController {
         _restStartMs = now;
         if (oldState == HangState.hang) {
           _setNumber++;
-          final restDuration = 0; // Rest just started
-          onHangCompleted?.call(_lastHangDurationMs, restDuration);
+          onHangCompleted?.call(_lastHangDurationMs, _lastRestDurationMs);
         }
         break;
       case HangState.prep:
+        _lastRestDurationMs = now - _restStartMs;
         _prepStartMs = now;
         _startPrepCountdown(now);
         break;
@@ -317,6 +332,7 @@ class HangController {
     _setNumber = 1;
     _armsUpSince = null;
     _armsDownSince = null;
+    _lastRestDurationMs = 0;
     _restStartMs = _now();
     _emitUiState(_now());
   }
@@ -325,7 +341,10 @@ class HangController {
   void dispose() {
     _cancelPrep();
     _uiUpdateTimer?.cancel();
-    _uiStateController.close();
+    _uiUpdateTimer = null;
+    if (!_uiStateController.isClosed) {
+      _uiStateController.close();
+    }
   }
 
   static int _now() => DateTime.now().millisecondsSinceEpoch;

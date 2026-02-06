@@ -68,28 +68,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _init() async {
-    // Load saved settings
-    _config = await _settingsService.loadConfig();
-    _debugOverlay = await _settingsService.loadDebugOverlay();
+    try {
+      // Load saved settings
+      _config = await _settingsService.loadConfig();
+      _debugOverlay = await _settingsService.loadDebugOverlay();
 
-    // Initialize services
-    _poseService = FakePoseService();
-    _controller = HangController(
-      config: _config,
-      onHangCompleted: _onHangCompleted,
-    );
-    _sessionStore = LocalSessionStore();
+      // Initialize services
+      _poseService = FakePoseService();
+      _controller = HangController(
+        config: _config,
+        onHangCompleted: _onHangCompleted,
+      );
+      _sessionStore = LocalSessionStore();
 
-    // Start a new session
-    _currentSessionId = 'session_${DateTime.now().millisecondsSinceEpoch}';
-    await _sessionStore!.saveSession(
-      TrainingSession(id: _currentSessionId, startTime: DateTime.now()),
-    );
+      // Start a new session
+      _currentSessionId = 'session_${DateTime.now().millisecondsSinceEpoch}';
+      await _sessionStore!.saveSession(
+        TrainingSession(id: _currentSessionId, startTime: DateTime.now()),
+      );
 
-    // Start pose detection
-    await _poseService!.start();
+      // Start pose detection
+      await _poseService!.start();
 
-    setState(() => _initialized = true);
+      if (!mounted) return;
+      setState(() => _initialized = true);
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+      if (!mounted) return;
+      setState(() => _initialized = true); // Show UI even on error
+    }
   }
 
   void _onHangCompleted(int hangDurationMs, int restDurationMs) {
@@ -115,8 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _poseService?.stop();
     _controller?.dispose();
+    _poseService?.stop();
     super.dispose();
   }
 
@@ -150,18 +157,18 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.timer),
-            selectedIcon: Icon(Icons.timer_outlined),
+            icon: Icon(Icons.timer_outlined),
+            selectedIcon: Icon(Icons.timer),
             label: 'Train',
           ),
           NavigationDestination(
-            icon: Icon(Icons.history),
-            selectedIcon: Icon(Icons.history_outlined),
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history),
             label: 'History',
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings),
-            selectedIcon: Icon(Icons.settings_outlined),
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],

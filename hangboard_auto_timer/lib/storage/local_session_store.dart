@@ -19,6 +19,16 @@ class LocalSessionStore extends SessionStore {
         endTime: session.endTime,
         records: updatedRecords,
       );
+    } else {
+      // Auto-create session if not found to avoid silent data loss
+      sessions.insert(
+        0,
+        TrainingSession(
+          id: record.sessionId,
+          startTime: record.timestamp,
+          records: [record],
+        ),
+      );
     }
     await _saveSessions(sessions);
   }

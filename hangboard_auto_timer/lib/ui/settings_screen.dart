@@ -32,6 +32,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _syncFromWidget();
+  }
+
+  @override
+  void didUpdateWidget(SettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentConfig != widget.currentConfig ||
+        oldWidget.debugOverlayEnabled != widget.debugOverlayEnabled) {
+      _syncFromWidget();
+    }
+  }
+
+  void _syncFromWidget() {
     _prepMs = widget.currentConfig.prepMs;
     _upHoldMs = widget.currentConfig.upHoldMs;
     _downHoldMs = widget.currentConfig.downHoldMs;
@@ -52,12 +65,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _settingsService.saveConfig(config);
     await _settingsService.saveDebugOverlay(_debugOverlay);
     widget.onSaved?.call(config, _debugOverlay);
+    if (!mounted) return;
     setState(() => _saving = false);
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Settings saved')));
-    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Settings saved')));
   }
 
   @override

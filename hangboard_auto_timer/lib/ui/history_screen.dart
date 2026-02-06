@@ -21,9 +21,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _loadSessions();
   }
 
+  @override
+  void didUpdateWidget(HistoryScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload when the widget is rebuilt (e.g., tab switch triggers parent rebuild)
+    _loadSessions();
+  }
+
   Future<void> _loadSessions() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final sessions = await widget.sessionStore.getSessions();
+    if (!mounted) return;
     setState(() {
       _sessions = sessions;
       _loading = false;
