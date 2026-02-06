@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        working-directory: hangboard_auto_timer
+        run: flutter pub get
+
+      - name: Check formatting
+        working-directory: hangboard_auto_timer
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze
+        working-directory: hangboard_auto_timer
+        run: flutter analyze
+
+      - name: Run tests
+        working-directory: hangboard_auto_timer
+        run: flutter test
